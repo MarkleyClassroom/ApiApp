@@ -27,9 +27,10 @@ struct Result: Codable {
 
 struct ContentView: View {
     @State var users:[User] = []
+    @State var searchText = ""
     var body: some View {
         NavigationStack{
-            if users.count == 0{
+            if users.count == 0 && !searchText.isEmpty{
                 //display a progress spinning wheel if no data has been pulled yet
                 VStack{
                     ProgressView().padding()
@@ -69,13 +70,23 @@ struct ContentView: View {
                     }
                 }
             }
-        }
+        }.searchable(text:$searchText)
+            .onSubmit(of: .search){
+                getUsers()
+            }
     }
     
     // fetches the Users from the github api
     
     func getUsers(){
-        if let apiURL = URL(string:"https://api.github.com/search/users?q=greg"){
+        // Add Search content
+        let trimmedSearchText = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        //Proceed only if searchText is not empty or just whitespace
+        guard !trimmedSearchText.isEmpty else {
+            return
+        }
+        if let apiURL = URL(string:"https://api.github.com/search/users?q=\(trimmedSearchText)"){
             var request = URLRequest(url:apiURL)
             request.httpMethod = "GET"
             URLSession.shared.dataTask(with: request){
